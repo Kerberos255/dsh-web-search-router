@@ -52,7 +52,7 @@ dsh plugin --profile web add link:/absolute/path/to/dsh-web-search-router
 GitHub 公开后建议固定 commit 或 release：
 
 ```bash
-dsh plugin --profile web add github:Kerberos255/dsh-web-search-router#<commit-or-tag>
+dsh plugin --profile web add github:Kerberos255/dsh-web-search-router#v0.1.0
 ```
 
 随包 `cordis.patch.yml` 使用通用默认配置：将 DSH 的 search provider 指向 `web-search-router`，并插入插件本身。

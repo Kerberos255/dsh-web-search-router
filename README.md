@@ -51,7 +51,7 @@ dsh plugin --profile web add link:/absolute/path/to/dsh-web-search-router
 From GitHub after the repository is published (pin a commit or release):
 
 ```bash
-dsh plugin --profile web add github:Kerberos255/dsh-web-search-router#<commit-or-tag>
+dsh plugin --profile web add github:Kerberos255/dsh-web-search-router#v0.1.0
 ```
 
 The bundled patch selects `web-search-router` as DSH's search provider and inserts the plugin with generic defaults.
