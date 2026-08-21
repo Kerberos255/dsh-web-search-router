@@ -1,0 +1,7 @@
+- id: web
+  config:
+    searchProvider: web-search-router
+
+- insert:
+    - id: web-search-router
+      name: dsh-web-search-router
