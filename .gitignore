@@ -5,3 +5,7 @@ coverage/
 .env.*
 !.env.example
 .DS_Store
+*.pid
+*.tmp
+.cache/
+cache/

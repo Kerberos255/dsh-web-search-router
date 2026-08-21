@@ -11,7 +11,7 @@ The plugin registers one DSH web search provider (`web-search-router`) and keeps
 - Reorder and enable/disable providers from the DSH Settings UI.
 - Automatic fallback on missing configuration, provider failures, timeouts, rate limits, quota/credit exhaustion, and (by default) empty results.
 - Short cooldowns for transient failures and configurable cooldowns for rate/quota failures.
-- Non-secret router settings are stored as readable JSON and apply without restarting DSH.
+- Non-secret router settings are stored in the native DSH Settings namespace and apply without restarting DSH.
 - API keys stay in DSH credentials / launch environment and are never returned to the Settings UI.
 - Provider error messages are sanitized before being logged or returned through the router.
 
@@ -32,7 +32,7 @@ Unconfigured providers are skipped automatically.
 
 ## Compatibility
 
-Current target: DSH `0.1.0-rc.6` on Node.js 20+.
+Current compatibility target: DSH `0.1.0-rc.6` and `0.1.1-rc.x` on Node.js 20+.
 
 DeepSeek Harness is still a developer preview and may introduce compatibility-breaking changes. Pin the plugin revision you install and re-test when upgrading DSH.
 
@@ -51,14 +51,14 @@ dsh plugin --profile web add link:/absolute/path/to/dsh-web-search-router
 From GitHub after the repository is published (pin a commit or release):
 
 ```bash
-dsh plugin --profile web add github:Kerberos255/dsh-web-search-router#v0.1.0
+dsh plugin --profile web add github:Kerberos255/dsh-web-search-router#<commit-or-tag>
 ```
 
 The bundled patch selects `web-search-router` as DSH's search provider and inserts the plugin with generic defaults.
 
 ## Settings
 
-Open **Settings → Plugins → Web Search Router** to:
+Open **Settings → Plugins → Plugin configuration → Web Search Router** and expand the card to:
 
 - reorder providers;
 - enable/disable providers;
@@ -67,11 +67,7 @@ Open **Settings → Plugins → Web Search Router** to:
 - set per-provider timeout and cooldown;
 - choose whether an empty result falls through to the next provider.
 
-Non-secret settings are stored at:
-
-```text
-$DSH_HOME/plugins/web-search-router.json
-```
+Non-secret settings are stored by native DSH Settings under the `web-search-router` namespace in `$DSH_HOME/settings.yaml`. When upgrading from an older release, if that namespace has no user layer yet, the plugin imports `$DSH_HOME/plugins/web-search-router.json` once; the legacy file is then ignored at runtime.
 
 Settings writes are accepted only from loopback access. API keys are written through DSH credentials; the UI only reads configured/unconfigured state.
 

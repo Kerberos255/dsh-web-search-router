@@ -12,7 +12,7 @@
 - 缺配置、请求失败、超时、限流、额度/余额耗尽时自动 fallback。
 - 默认空结果继续尝试下一提供方。
 - 临时网络/5xx 使用短冷却；429、quota/credit 类错误使用可配置冷却。
-- 排序、启停、超时、冷却等非敏感设置保存为可读 JSON，并可热生效。
+- 排序、启停、超时、冷却等非敏感设置保存到 DSH 官方 Settings namespace，并可热生效。
 - API Key 只进入 DSH credentials / launch environment，Settings UI 不读取已保存的 Key 值。
 - Provider 错误在写日志或向 Router 上层返回前会做脱敏处理。
 
@@ -33,7 +33,7 @@
 
 ## 兼容性
 
-当前目标版本：DSH `0.1.0-rc.6`，Node.js 20+。
+当前兼容目标：DSH `0.1.0-rc.6` 与 `0.1.1-rc.x`，Node.js 20+。
 
 DeepSeek Harness 仍处于 developer preview，后续可能出现破坏性兼容变更。建议安装时固定插件 commit/release，并在升级 DSH 后重新测试。
 
@@ -52,14 +52,14 @@ dsh plugin --profile web add link:/absolute/path/to/dsh-web-search-router
 GitHub 公开后建议固定 commit 或 release：
 
 ```bash
-dsh plugin --profile web add github:Kerberos255/dsh-web-search-router#v0.1.0
+dsh plugin --profile web add github:Kerberos255/dsh-web-search-router#<commit-or-tag>
 ```
 
 随包 `cordis.patch.yml` 使用通用默认配置：将 DSH 的 search provider 指向 `web-search-router`，并插入插件本身。
 
 ## Settings
 
-打开 **设置 → 插件 → Web Search Router** 可进行：
+打开 **设置 → 插件 → 插件配置 → Web Search Router**，展开卡片后可进行：
 
 - 调整提供方优先级；
 - 启用/停用提供方；
@@ -68,11 +68,7 @@ dsh plugin --profile web add github:Kerberos255/dsh-web-search-router#v0.1.0
 - 设置单提供方超时和冷却时间；
 - 设置空结果是否继续下一项。
 
-非敏感设置保存在：
-
-```text
-$DSH_HOME/plugins/web-search-router.json
-```
+非敏感设置由 DSH 官方 Settings 保存到 `$DSH_HOME/settings.yaml` 的 `web-search-router` namespace。升级自旧版时，如果该 namespace 尚无用户层，插件会一次性读取旧的 `$DSH_HOME/plugins/web-search-router.json` 并迁移；旧文件随后不再参与运行。
 
 Settings 写操作只允许 loopback。本插件通过 DSH credentials 写 Key；前端只读取“已配置/未配置”状态。
 
