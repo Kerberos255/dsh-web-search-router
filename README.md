@@ -11,7 +11,7 @@ The plugin registers one DSH web search provider (`web-search-router`) and keeps
 - Reorder and enable/disable providers from the DSH Settings UI.
 - Automatic fallback on missing configuration, provider failures, timeouts, rate limits, quota/credit exhaustion, and (by default) empty results.
 - Short cooldowns for transient failures and configurable cooldowns for rate/quota failures.
-- Non-secret router settings are stored in the native DSH Settings namespace and apply without restarting DSH.
+- Non-secret router settings are stored in `plugins/dsh-web-search-router/config.json` next to `$DSH_HOME` and apply without restarting DSH.
 - API keys stay in DSH credentials / launch environment and are never returned to the Settings UI.
 - Provider error messages are sanitized before being logged or returned through the router.
 
@@ -20,7 +20,7 @@ The plugin registers one DSH web search provider (`web-search-router`) and keeps
 | Provider | Configuration |
 | --- | --- |
 | SearXNG | Base URL in Settings (no API key required) |
-| DeepSeek Search | `DEEPSEEK_API_KEY` by default; the credential ref/base URL/model can be overridden in plugin config |
+| DeepSeek Search | Delegates to the `deepseek-official` provider DSH itself registers: the account sign-in, or the shared `DEEPSEEK_API_KEY` credential |
 | Tavily | `TAVILY_API_KEY` |
 | Brave Search | `BRAVE_API_KEY` |
 | Exa | `EXA_API_KEY` |
@@ -32,7 +32,7 @@ Unconfigured providers are skipped automatically.
 
 ## Compatibility
 
-Current compatibility target: DSH `0.1.0-rc.6` and `0.1.1-rc.x` on Node.js 20+.
+Current compatibility target: DSH `0.2.0-rc.2` on Node.js 20+.
 
 DeepSeek Harness is still a developer preview and may introduce compatibility-breaking changes. Pin the plugin revision you install and re-test when upgrading DSH.
 
@@ -48,7 +48,7 @@ Local development:
 dsh plugin --profile web add link:/absolute/path/to/dsh-web-search-router
 ```
 
-From GitHub after the repository is published (pin a commit or release):
+From GitHub (pin a commit or release):
 
 ```bash
 dsh plugin --profile web add github:Kerberos255/dsh-web-search-router#<commit-or-tag>
@@ -67,23 +67,20 @@ Open **Settings → Plugins → Plugin configuration → Web Search Router** and
 - set per-provider timeout and cooldown;
 - choose whether an empty result falls through to the next provider.
 
-Non-secret settings are stored by native DSH Settings under the `web-search-router` namespace in `$DSH_HOME/settings.yaml`. When upgrading from an older release, if that namespace has no user layer yet, the plugin imports `$DSH_HOME/plugins/web-search-router.json` once; the legacy file is then ignored at runtime.
+Non-secret settings live in `plugins/dsh-web-search-router/config.json` next to `$DSH_HOME`; the card reads and writes that file.
 
 Settings writes are accepted only from loopback access. API keys are written through DSH credentials; the UI only reads configured/unconfigured state.
 
-## Advanced DeepSeek Search configuration
+## DeepSeek Search tier
 
-The plugin defaults to DSH's official DeepSeek Search provider settings. A profile may override them:
+The DeepSeek tier configures nothing of its own: it calls the `deepseek-official` provider DSH
+itself registered, so the endpoint, the model, the account-or-key authentication, and the
+per-request limits all stay owned by DSH. Changing the endpoint in DSH's own Web search settings
+needs no extra step here.
 
-```yaml
-- id: web-search-router
-  config:
-    deepseekBaseURL: https://api.deepseek.com/anthropic/v1
-    deepseekModel: deepseek-v4-flash
-    deepseekApiKeyEnv: DEEPSEEK_API_KEY
-```
-
-The Settings UI follows the configured `deepseekApiKeyEnv` credential reference rather than assuming a fixed key name.
+The tier is attempted only while that provider is registered and the session can plausibly
+authenticate — a session on the `deepseek-account` route, or the shared `DEEPSEEK_API_KEY`
+credential the Models page manages for chat. Otherwise the router skips to the next provider.
 
 ## Fallback behavior
 

@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "order": [
+    "searxng",
+    "deepseek",
+    "tavily",
+    "brave",
+    "exa",
+    "firecrawl",
+    "parallel",
+    "duckduckgo"
+  ],
+  "enabledProviders": [
+    "searxng",
+    "deepseek",
+    "tavily",
+    "brave",
+    "exa",
+    "firecrawl",
+    "parallel",
+    "duckduckgo"
+  ],
+  "timeoutMs": 15000,
+  "cooldownSeconds": 300,
+  "fallbackOnEmpty": true,
+  "searxngBaseURL": ""
+}

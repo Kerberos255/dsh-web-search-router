@@ -1,14 +1,15 @@
 {
   "name": "dsh-web-search-router",
-  "version": "0.1.0",
-  "description": "Priority-ordered multi-provider web_search router for DeepSeek Harness with automatic fallback.",
+  "version": "0.2.7",
+  "description": "按优先级选择搜索提供方，并在失败、限流或无结果时自动切换。",
   "license": "MIT",
   "type": "module",
   "main": "lib/index.js",
   "exports": {
     ".": "./lib/index.js",
     "./client": "./lib/client.js",
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    "./locale/*.json": "./locale/*.json"
   },
   "files": [
     "lib/",
@@ -16,7 +17,9 @@
     "dsh.plugin.json",
     "LICENSE",
     "README.md",
-    "README.zh-CN.md"
+    "README.zh-CN.md",
+    "locale/",
+    "config.example.json"
   ],
   "keywords": [
     "dsh-plugin",
@@ -33,19 +36,26 @@
     "duckduckgo"
   ],
   "dsh": {
-    "bundle": { "patch": "./cordis.patch.yml" },
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
     "client": {
       "inject": [
-        "@deepseek-ai/dsh-client-runtime",
+        "@deepseek-ai/dsh-api-remotes",
         "@deepseek-ai/dsh-client-locale",
         "@deepseek-ai/dsh-client-connection",
-        "@deepseek-ai/dsh-client-ui-settings"
+        "@deepseek-ai/dsh-client-ui-primitives",
+        "@deepseek-ai/dsh-client-ui-plugin-manager"
       ],
       "platform": "web"
     }
   },
-  "engines": { "node": ">=20" },
-  "publishConfig": { "access": "public" },
+  "engines": {
+    "node": ">=20"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Kerberos255/dsh-web-search-router.git"
@@ -55,13 +65,22 @@
     "url": "https://github.com/Kerberos255/dsh-web-search-router/issues"
   },
   "peerDependencies": {
-    "@deepseek-ai/dsh-credentials": "^0.1.0-rc.6 || ^0.1.1-rc.0",
-    "@deepseek-ai/dsh-home-paths": "^0.1.0-rc.6 || ^0.1.1-rc.0",
-    "@deepseek-ai/dsh-launch-environment": "^0.1.0-rc.6 || ^0.1.1-rc.0",
-    "@deepseek-ai/dsh-settings": "^0.1.0-rc.6 || ^0.1.1-rc.0",
-    "@deepseek-ai/dsh-web": "^0.1.0-rc.6 || ^0.1.1-rc.0",
-    "@deepseek-ai/dsh-web-search-deepseek": "^0.1.0-rc.6 || ^0.1.1-rc.0",
-    "@deepseek-ai/schemastery": "^3.18.1"
+    "@deepseek-ai/dsh-credentials": "0.2.0-rc.2",
+    "@deepseek-ai/dsh-home-paths": "0.2.0-rc.2",
+    "@deepseek-ai/dsh-launch-environment": "0.2.0-rc.2",
+    "@deepseek-ai/dsh-settings": "0.2.0-rc.2",
+    "@deepseek-ai/dsh-web": "0.2.0-rc.2",
+    "@deepseek-ai/dsh-web-search-deepseek": "0.2.0-rc.2",
+    "@deepseek-ai/schemastery": "^3.18.1",
+    "@deepseek-ai/cordis": "4.0.4",
+    "@deepseek-ai/dsh-api-remotes": "0.2.0-rc.2",
+    "@deepseek-ai/dsh-client-store": "0.2.0-rc.2",
+    "@deepseek-ai/dsh-client-locale": "0.2.0-rc.2",
+    "@deepseek-ai/dsh-client-connection": "0.2.0-rc.2",
+    "@deepseek-ai/dsh-client-ui-primitives": "0.2.0-rc.2",
+    "@deepseek-ai/dsh-client-ui-settings": "0.2.0-rc.2",
+    "@deepseek-ai/dsh-client-ui-plugin-manager": "0.2.0-rc.2",
+    "@deepseek-ai/dsh-typert-protocol": "0.2.0-rc.2"
   },
   "scripts": {
     "test": "node --test tests/*.test.mjs"

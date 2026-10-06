@@ -9,3 +9,10 @@ coverage/
 *.tmp
 .cache/
 cache/
+package-lock.json
+
+# Local development / machine-specific files
+local-notes.md
+local-tools/
+tests/live-*.mjs
+tests/profile-import.mjs

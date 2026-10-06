@@ -12,7 +12,7 @@
 - 缺配置、请求失败、超时、限流、额度/余额耗尽时自动 fallback。
 - 默认空结果继续尝试下一提供方。
 - 临时网络/5xx 使用短冷却；429、quota/credit 类错误使用可配置冷却。
-- 排序、启停、超时、冷却等非敏感设置保存到 DSH 官方 Settings namespace，并可热生效。
+- 排序、启停、超时、冷却等非敏感设置保存在 `$DSH_HOME` 旁边的 `plugins/dsh-web-search-router/config.json`，改完热生效。
 - API Key 只进入 DSH credentials / launch environment，Settings UI 不读取已保存的 Key 值。
 - Provider 错误在写日志或向 Router 上层返回前会做脱敏处理。
 
@@ -21,7 +21,7 @@
 | 提供方 | 配置 |
 | --- | --- |
 | SearXNG | 在 Settings 填 Base URL；无需 API Key |
-| DeepSeek Search | 默认 `DEEPSEEK_API_KEY`；可通过插件配置覆盖 credential ref / Base URL / model |
+| DeepSeek Search | 委托给 DSH 自己注册的 `deepseek-official` 提供方：用账号登录，或模型页管理的同一个 `DEEPSEEK_API_KEY` 凭据 |
 | Tavily | `TAVILY_API_KEY` |
 | Brave Search | `BRAVE_API_KEY` |
 | Exa | `EXA_API_KEY` |
@@ -33,7 +33,7 @@
 
 ## 兼容性
 
-当前兼容目标：DSH `0.1.0-rc.6` 与 `0.1.1-rc.x`，Node.js 20+。
+当前兼容目标：DSH `0.2.0-rc.2`，Node.js 20+。
 
 DeepSeek Harness 仍处于 developer preview，后续可能出现破坏性兼容变更。建议安装时固定插件 commit/release，并在升级 DSH 后重新测试。
 
@@ -49,7 +49,7 @@ DeepSeek Harness 仍处于 developer preview，后续可能出现破坏性兼容
 dsh plugin --profile web add link:/absolute/path/to/dsh-web-search-router
 ```
 
-GitHub 公开后建议固定 commit 或 release：
+从 GitHub 安装（建议固定 commit 或 release）：
 
 ```bash
 dsh plugin --profile web add github:Kerberos255/dsh-web-search-router#<commit-or-tag>
@@ -68,23 +68,15 @@ dsh plugin --profile web add github:Kerberos255/dsh-web-search-router#<commit-or
 - 设置单提供方超时和冷却时间；
 - 设置空结果是否继续下一项。
 
-非敏感设置由 DSH 官方 Settings 保存到 `$DSH_HOME/settings.yaml` 的 `web-search-router` namespace。升级自旧版时，如果该 namespace 尚无用户层，插件会一次性读取旧的 `$DSH_HOME/plugins/web-search-router.json` 并迁移；旧文件随后不再参与运行。
+非敏感设置保存在 `$DSH_HOME` 旁边的 `plugins/dsh-web-search-router/config.json`；卡片读写的就是这个文件。
 
 Settings 写操作只允许 loopback。本插件通过 DSH credentials 写 Key；前端只读取“已配置/未配置”状态。
 
-## DeepSeek Search 高级配置
+## DeepSeek Search 这一档
 
-默认使用 DSH 官方 DeepSeek Search 配置。需要代理或兼容端点时，可由 profile 覆盖：
+DeepSeek 这一档自己不配置任何东西：它直接调用 DSH 已注册的 `deepseek-official` 提供方，因此端点、模型、账号或密钥鉴权、单次请求上限全部由 DSH 拥有。在 DSH 自己的网页搜索设置里改端点，这里无需任何额外操作。
 
-```yaml
-- id: web-search-router
-  config:
-    deepseekBaseURL: https://api.deepseek.com/anthropic/v1
-    deepseekModel: deepseek-v4-flash
-    deepseekApiKeyEnv: DEEPSEEK_API_KEY
-```
-
-Settings UI 会跟随实际 `deepseekApiKeyEnv`，不会把 DeepSeek Key 名称写死。
+仅当该提供方已注册、且当前会话有可用的鉴权途径时才会尝试这一档 —— 会话走 `deepseek-account` 路由，或存在模型页管理的同一个 `DEEPSEEK_API_KEY` 凭据；否则路由直接跳到下一个提供方。
 
 ## Fallback 规则
 
