@@ -1,8 +1,8 @@
-# dsh-web-search-router
+# Web Search Router for DeepSeek Harness
 
-[简体中文](README.zh-CN.md)
+[简体中文](README.zh-CN.md) · [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) · [Security](SECURITY.md)
 
-A priority-ordered multi-provider `web_search` router for [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness).
+A priority-ordered, **multi-provider `web_search` router** for DSH. Keep the model-facing tool unchanged while automatically switching providers when one is unavailable.
 
 The plugin registers one DSH web search provider (`web-search-router`) and keeps the model-facing tool unchanged: agents still call DSH's built-in `web_search`. Providers are tried from top to bottom and the router stops on the first successful result.
 
@@ -32,9 +32,7 @@ Unconfigured providers are skipped automatically.
 
 ## Compatibility
 
-Current compatibility target: DSH `0.2.0-rc.2` on Node.js 20+.
-
-DeepSeek Harness is still a developer preview and may introduce compatibility-breaking changes. Pin the plugin revision you install and re-test when upgrading DSH.
+Check [package.json](package.json) for the runtime and peer-dependency constraints supported by the current source. DeepSeek Harness is under active development and may introduce compatibility-breaking changes. Pin the plugin to a Git commit when reproducibility matters, and retest when upgrading DSH.
 
 ### Agent preset requirement
 
@@ -109,6 +107,11 @@ Tests cover routing order/fallback/cooldowns, settings persistence and provider 
 - The browser receives credential references and configured-state metadata, never stored key values.
 - Router errors redact URLs and key/token-like values before logging or surfacing failure details.
 
+## Related plugins
+
+- [Browser Tools](https://github.com/Kerberos255/dsh-browser-tools) for CDP-based web interaction.
+- [Status Cards](https://github.com/Kerberos255/dsh-status-cards) for DSH runtime and provider status.
+
 ## License
 
-MIT
+[MIT](LICENSE)

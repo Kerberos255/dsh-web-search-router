@@ -1,8 +1,8 @@
-# dsh-web-search-router
+# DSH 网页搜索路由（Web Search Router）
 
-[English](README.md)
+[English](README.md) · [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) · [安全说明](SECURITY.md)
 
-面向 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 的多提供方 `web_search` 优先级路由插件。
+为 DSH 的原生 `web_search` 提供**多搜索服务优先级与自动降级路由**，无需给模型增加另一个搜索工具。
 
 插件只注册一个 DSH Web Search Provider：`web-search-router`。模型侧工具保持不变，Agent 仍然调用 DSH 内置的 `web_search`；Router 按设置顺序从上到下尝试提供方，第一个成功结果即返回。
 
@@ -33,9 +33,7 @@
 
 ## 兼容性
 
-当前兼容目标：DSH `0.2.0-rc.2`，Node.js 20+。
-
-DeepSeek Harness 仍处于 developer preview，后续可能出现破坏性兼容变更。建议安装时固定插件 commit/release，并在升级 DSH 后重新测试。
+当前运行时与 peer 依赖要求以 [package.json](package.json) 为准。DeepSeek Harness 仍在迭代，后续可能出现破坏性变更；建议实际部署固定 Git 提交，在升级宿主后重新测试。
 
 ### Agent Preset 要求
 
@@ -105,6 +103,11 @@ npm test
 - Browser 只获得 credential ref 与配置状态，不会获得已保存 Key 值。
 - Router 在日志和失败摘要中会脱敏 URL 以及疑似 key/token 字符串。
 
-## License
+## 相关插件
 
-MIT
+- [浏览器工具](https://github.com/Kerberos255/dsh-browser-tools)：通过 CDP 操作网页。
+- [状态卡片](https://github.com/Kerberos255/dsh-status-cards)：查看 DSH 运行与额度状态。
+
+## 许可证
+
+[MIT](LICENSE)
