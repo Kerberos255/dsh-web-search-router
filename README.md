@@ -40,17 +40,13 @@ This plugin supplies the search backend; it does **not** add a second model-faci
 
 ## Install
 
-Local development:
+Install to the profile that runs your agents (`desktop` is an example):
 
 ```bash
-dsh plugin --profile web add link:/absolute/path/to/dsh-web-search-router
+dsh plugin --profile desktop add github:Kerberos255/dsh-web-search-router
 ```
 
-From GitHub (pin a commit or release):
-
-```bash
-dsh plugin --profile web add github:Kerberos255/dsh-web-search-router#<commit-or-tag>
-```
+For reproducible installations, pin a Git commit. Local development can instead use `link:/absolute/path/to/dsh-web-search-router` with the same profile. Installing the plugin does **not** add `web_search` to a preset that omits the native tool.
 
 The bundled patch selects `web-search-router` as DSH's search provider and inserts the plugin with generic defaults.
 

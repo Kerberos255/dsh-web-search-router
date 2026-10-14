@@ -41,17 +41,13 @@
 
 ## 安装
 
-本地开发：
+安装到实际使用的 Agent Profile（下例使用 `desktop`）：
 
 ```bash
-dsh plugin --profile web add link:/absolute/path/to/dsh-web-search-router
+dsh plugin --profile desktop add github:Kerberos255/dsh-web-search-router
 ```
 
-从 GitHub 安装（建议固定 commit 或 release）：
-
-```bash
-dsh plugin --profile web add github:Kerberos255/dsh-web-search-router#<commit-or-tag>
-```
+需要可复现部署时可固定 Git 提交；本地开发可在同一 Profile 下使用 `link:/absolute/path/to/dsh-web-search-router`。注意：安装路由器**不会**自动给极简 Agent 预设增加原生 `web_search` 工具。
 
 随包 `cordis.patch.yml` 使用通用默认配置：将 DSH 的 search provider 指向 `web-search-router`，并插入插件本身。
 
