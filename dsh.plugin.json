@@ -1,10 +1,10 @@
 {
   "id": "dsh-external/dsh-web-search-router",
-  "version": "0.1.0",
+  "version": "0.2.12",
   "main": "./lib/index.js",
   "description": "Priority-ordered multi-provider web_search router with live settings and automatic fallback.",
   "engines": {
-    "dsh": ">=0.1.0-rc.6 <0.2.0"
+    "dsh": ">=0.2.0-rc.2"
   },
   "contributes": {
     "tools": [],
