@@ -1,6 +1,6 @@
 {
   "name": "dsh-web-search-router",
-  "version": "0.2.12",
+  "version": "0.2.13",
   "description": "按优先级选择搜索提供方，并在失败、限流或无结果时自动切换。",
   "license": "MIT",
   "type": "module",
@@ -74,7 +74,7 @@
     "@deepseek-ai/dsh-web": "0.2.0-rc.2 || 0.2.1-rc.2 || 0.2.1-alpha.1 || >=0.2.1",
     "@deepseek-ai/dsh-web-search-deepseek": "0.2.0-rc.2 || 0.2.1-rc.2 || 0.2.1-alpha.1 || >=0.2.1",
     "@deepseek-ai/schemastery": "^3.18.1",
-    "@deepseek-ai/cordis": "4.0.4 || 4.0.5-alpha.1 || 4.0.5",
+    "@deepseek-ai/cordis": "4.0.5-alpha.1 || >=4.0.4 <5.0.0",
     "@deepseek-ai/dsh-api-remotes": "0.2.0-rc.2 || 0.2.1-rc.2 || 0.2.1-alpha.1 || >=0.2.1",
     "@deepseek-ai/dsh-client-store": "0.2.0-rc.2 || 0.2.1-rc.2 || 0.2.1-alpha.1 || >=0.2.1",
     "@deepseek-ai/dsh-client-locale": "0.2.0-rc.2 || 0.2.1-rc.2 || 0.2.1-alpha.1 || >=0.2.1",
