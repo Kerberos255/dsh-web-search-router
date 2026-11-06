@@ -76,6 +76,30 @@ The tier is attempted only while that provider is registered and the session can
 authenticate — a session on the `deepseek-account` route, or the shared `DEEPSEEK_API_KEY`
 credential the Models page manages for chat. Otherwise the router skips to the next provider.
 
+## Relative time-range searches
+
+Append one suffix to a search query: `company earnings --week`. Supported suffixes are
+`--day`, `--week`, `--month`, and `--year` (case-insensitive). These are
+**relative, best-effort** filters, not verified publication-date guarantees.
+The suffix is removed before searching; use only one suffix at the end.
+
+A dated query is routed **only** to the enabled SearXNG provider (which may point to an
+API Pool search gateway), regardless of the ordinary provider order. The API Pool
+can still fall back among its own APIs and free search engines. If SearXNG is
+unconfigured, unavailable or fails, the plugin reports that instead of silently
+using an independent provider that ignores the date. Empty dated results are
+returned as empty. Results may contain pages without dates or older pages from
+engines unable to filter; check the source article's date for time-critical tasks.
+
+For a SearXNG-compatible API Pool gateway listening on port 8890, SearXNG requests get a
+32-second provider budget (the gateway may take up to 27 seconds). Other
+providers retain their configured timeouts. The requested `maxResults` is also
+forwarded as `count` to compatible SearXNG gateways.
+
+This syntax is handled by the router, **not** advertised in DSH's built-in
+`web_search` tool schema. Agent instructions or scheduled prompts should
+explicitly ask for the suffix when time filtering is required.
+
 ## Fallback behavior
 
 For each enabled provider, in configured order:

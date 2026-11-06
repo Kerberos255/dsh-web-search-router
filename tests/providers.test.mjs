@@ -47,7 +47,7 @@ test('Parallel adapter uses Search API and maps excerpts', async () => {
 
 test('SearXNG adapter maps answers and results', async () => {
   await withFetch(async (url) => {
-    assert.match(String(url), /^https:\/\/search\.example\/search\?q=test&format=json$/)
+    assert.match(String(url), /^https:\/\/search\.example\/search\?q=test&format=json&count=3$/)
     return new Response(JSON.stringify({
       answers: ['Direct answer'],
       results: [{ url: 'https://example.com/a', title: 'A', content: 'Snippet A' }],
@@ -105,4 +105,32 @@ test('DuckDuckGo parser decodes redirect URLs and snippets', () => {
   assert.equal(rows[0].url, 'https://example.com/d')
   assert.equal(rows[0].title, 'Example & D')
   assert.equal(rows[0].snippet, 'A useful snippet')
+})
+
+
+test('SearXNG adapter sends date and desired result count without polluting the query', async () => {
+  await withFetch(async (url) => {
+    const parsed = new URL(url)
+    assert.equal(parsed.pathname, '/search')
+    assert.equal(parsed.searchParams.get('q'), '格力 电器')
+    assert.equal(parsed.searchParams.get('format'), 'json')
+    assert.equal(parsed.searchParams.get('count'), '4')
+    assert.equal(parsed.searchParams.get('time_range'), 'week')
+    return new Response(JSON.stringify({
+      results: [{ url: 'https://example.org', title: 'News', published_date: null }],
+    }), { status: 200 })
+  }, async () => {
+    const result = await searxngSearch({ baseURL: 'http://127.0.0.1:8890', query: '格力 电器', maxResults: 4, timeRange: 'week' })
+    assert.equal(result.sources.length, 1)
+    assert.equal(result.sources[0].publishedAt, undefined)
+  })
+})
+
+test('SearXNG adapter omits time range when no date was requested', async () => {
+  await withFetch(async (url) => {
+    const parsed = new URL(url)
+    assert.equal(parsed.searchParams.get('count'), '3')
+    assert.equal(parsed.searchParams.has('time_range'), false)
+    return new Response(JSON.stringify({ results: [] }), { status: 200 })
+  }, () => searxngSearch({ baseURL: 'https://search.example/', query: 'test', maxResults: 3 }))
 })

@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { createSearchRouter, DEFAULT_ORDER } from '../lib/router.js'
+import { createSearchRouter, DEFAULT_ORDER, parseTimeRangeQuery } from '../lib/router.js'
 
 function config(overrides = {}) {
   return {
@@ -125,4 +125,102 @@ test('caller abort propagates without trying another provider', async () => {
   const router = createSearchRouter({ providers, getConfig: () => config({ order: ['searxng', 'duckduckgo'], enabledProviders: ['searxng', 'duckduckgo'] }), log: {} })
   await assert.rejects(router.search({ query: 'test' }, controller.signal), (error) => error?.code === 'ROUTER_ABORTED')
   assert.deepEqual(calls, [])
+})
+
+
+test('time-range suffixes are stripped and normalized without touching ordinary terms', () => {
+  for (const range of ['day', 'week', 'month', 'year']) {
+    assert.deepEqual(parseTimeRangeQuery(`公告 --${range}`), { query: '公告', timeRange: range })
+  }
+  assert.deepEqual(parseTimeRangeQuery('中国 新闻 --WEEK   '), { query: '中国 新闻', timeRange: 'week' })
+  assert.deepEqual(parseTimeRangeQuery('中文　--DAY'), { query: '中文', timeRange: 'day' })
+  assert.deepEqual(parseTimeRangeQuery('news --weeks'), { query: 'news --weeks', timeRange: null })
+  assert.deepEqual(parseTimeRangeQuery('news --2week'), { query: 'news --2week', timeRange: null })
+  assert.deepEqual(parseTimeRangeQuery('explain --week usage'), { query: 'explain --week usage', timeRange: null })
+  assert.deepEqual(parseTimeRangeQuery('no filter'), { query: 'no filter', timeRange: null })
+  assert.deepEqual(parseTimeRangeQuery('x--week'), { query: 'x--week', timeRange: null })
+})
+
+test('bare and ambiguous time flags reject instead of polluting upstream searches', () => {
+  for (const query of ['--week', ' --WEEK ', '新闻 --week --month', '新闻 --week 公告 --month']) {
+    assert.throws(() => parseTimeRangeQuery(query), (error) => error.code === 'ROUTER_INVALID_QUERY')
+  }
+})
+
+test('dated search uses SearXNG even if configured below independent providers', async () => {
+  const calls = []
+  const providers = new Map([
+    ['deepseek', provider(async () => { calls.push('deepseek'); return { sources: [{ url: 'https://old.example' }] } })],
+    ['searxng', provider(async (request) => {
+      calls.push(request)
+      return { content: 'Direct answer', sources: [{ url: 'https://recent.example' }] }
+    })],
+  ])
+  const router = createSearchRouter({
+    providers, getConfig: () => config({ order: ['deepseek', 'searxng'] }), log: {},
+  })
+  const result = await router.search({ query: '公告 --WEEK', maxResults: 3 })
+  assert.deepEqual(calls, [{ query: '公告', maxResults: 3, timeRange: 'week' }])
+  assert.equal(result.sources[0].url, 'https://recent.example')
+  assert.match(result.content, /尽力筛选/)
+  assert.match(result.content, /Direct answer/)
+})
+
+test('empty dated result succeeds without silently falling back to unfiltered providers', async () => {
+  const calls = []
+  const providers = new Map([
+    ['searxng', provider(async (request) => { calls.push(request.timeRange); return { sources: [] } })],
+    ['duckduckgo', provider(async () => { calls.push('duckduckgo'); return { sources: [{ url: 'https://old.example' }] } })],
+  ])
+  const router = createSearchRouter({
+    providers, getConfig: () => config({ order: ['searxng', 'duckduckgo'] }), log: {},
+  })
+  const result = await router.search({ query: '新闻 --day' })
+  assert.deepEqual(calls, ['day'])
+  assert.deepEqual(result.sources, [])
+  assert.match(result.content, /尽力筛选/)
+})
+
+test('failed dated search does not fall back to non-date-capable providers', async () => {
+  const calls = []
+  const providers = new Map([
+    ['searxng', provider(async () => { calls.push('searxng'); throw new Error('gateway down') })],
+    ['deepseek', provider(async () => { calls.push('deepseek'); return { sources: [{ url: 'https://old.example' }] } })],
+  ])
+  const router = createSearchRouter({ providers, getConfig: () => config(), log: {} })
+  await assert.rejects(router.search({ query: '公告 --month' }), (error) => error.code === 'ROUTER_FAILED')
+  assert.deepEqual(calls, ['searxng'])
+})
+
+test('dated search with disabled SearXNG fails clearly; ordinary search still works', async () => {
+  const calls = []
+  const providers = new Map([
+    ['searxng', provider(async () => { calls.push('searxng'); return { sources: [] } })],
+    ['duckduckgo', provider(async () => { calls.push('duckduckgo'); return { sources: [{ url: 'https://ok.example' }] } })],
+  ])
+  const router = createSearchRouter({ providers, getConfig: () => config({ enabledProviders: ['duckduckgo'] }), log: {} })
+  await assert.rejects(router.search({ query: '公告 --year' }), (error) => error.code === 'ROUTER_UNAVAILABLE')
+  const result = await router.search({ query: '公告' })
+  assert.deepEqual(calls, ['duckduckgo'])
+  assert.equal(result.content, undefined)
+})
+
+test('provider-request timeout override is used when a gateway needs longer than the global setting', async () => {
+  let abortDetected = false
+  const providers = new Map([['searxng', {
+    configured: async () => true,
+    requestTimeoutMs: async () => 2400,
+    search: (_req, signal) => new Promise((resolve, reject) => {
+      const alarm = setTimeout(() => resolve({ sources: [{ url: 'https://ok.example' }] }), 1100)
+      signal.addEventListener('abort', () => {
+        clearTimeout(alarm)
+        abortDetected = true
+        reject(new Error('aborted'))
+      }, { once: true })
+    }),
+  }]])
+  const router = createSearchRouter({ providers, getConfig: () => config({ enabledProviders: ['searxng'], timeoutMs: 1000 }), log: {} })
+  const result = await router.search({ query: 'test --week' })
+  assert.equal(result.sources.length, 1)
+  assert.equal(abortDetected, false)
 })
