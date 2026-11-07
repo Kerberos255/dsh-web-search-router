@@ -2,140 +2,42 @@
 
 [简体中文](README.zh-CN.md) · [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) · [Security](SECURITY.md)
 
-A priority-ordered, **multi-provider `web_search` router** for DSH. Keep the model-facing tool unchanged while automatically switching providers when one is unavailable.
-
-The plugin registers one DSH web search provider (`web-search-router`) and keeps the model-facing tool unchanged: agents still call DSH's built-in `web_search`. Providers are tried from top to bottom and the router stops on the first successful result.
+Add **provider priority, automatic fallback and relative time filtering** to DSH's built-in `web_search`. Agents keep using the same native tool.
 
 ## Features
 
-- Reorder and enable/disable providers from the DSH Settings UI.
-- Automatic fallback on missing configuration, provider failures, timeouts, rate limits, quota/credit exhaustion, and (by default) empty results.
-- Short cooldowns for transient failures and configurable cooldowns for rate/quota failures.
-- Non-secret router settings are stored in `plugins/dsh-web-search-router/config.json` next to `$DSH_HOME` and apply without restarting DSH.
-- API keys stay in DSH credentials / launch environment and are never returned to the Settings UI.
-- Provider error messages are sanitized before being logged or returned through the router.
+- Configure provider order, enable/disable state, timeouts and cooldowns in Settings. Failures, rate limits, exhausted quotas and optionally empty results trigger fallback.
+- Supports **SearXNG, DeepSeek Search, Tavily, Brave, Exa, Firecrawl, Parallel and DuckDuckGo**; unconfigured providers are skipped.
+- DeepSeek Search delegates to DSH's native `deepseek-official` provider and authentication. Third-party API keys are managed through DSH credentials and are never revealed by the settings UI.
+- Non-secret settings apply without a DSH restart. Error details are sanitized.
 
-## Providers
+## Install and configure
 
-| Provider | Configuration |
-| --- | --- |
-| SearXNG | Base URL in Settings (no API key required) |
-| DeepSeek Search | Delegates to the `deepseek-official` provider DSH itself registers: the account sign-in, or the shared `DEEPSEEK_API_KEY` credential |
-| Tavily | `TAVILY_API_KEY` |
-| Brave Search | `BRAVE_API_KEY` |
-| Exa | `EXA_API_KEY` |
-| Firecrawl | `FIRECRAWL_API_KEY` |
-| Parallel | `PARALLEL_API_KEY` |
-| DuckDuckGo | No key; best-effort HTML fallback |
-
-Unconfigured providers are skipped automatically.
-
-## Compatibility
-
-Check [package.json](package.json) for the runtime and peer-dependency constraints supported by the current source. DeepSeek Harness is under active development and may introduce compatibility-breaking changes. Pin the plugin to a Git commit when reproducibility matters, and retest when upgrading DSH.
-
-### Agent preset requirement
-
-This plugin supplies the search backend; it does **not** add a second model-facing tool. Your agent preset must expose DSH's built-in `web_search` tool (for example, the standard preset). A minimal preset that omits `web_search` will not invoke this router.
-
-## Install
-
-Install to the profile that runs your agents (`desktop` is an example):
-
-```bash
+```sh
 dsh plugin --profile desktop add github:Kerberos255/dsh-web-search-router
 ```
 
-For reproducible installations, pin a Git commit. Local development can instead use `link:/absolute/path/to/dsh-web-search-router` with the same profile. Installing the plugin does **not** add `web_search` to a preset that omits the native tool.
-
-The bundled patch selects `web-search-router` as DSH's search provider and inserts the plugin with generic defaults.
-
-## Settings
-
-Open **Settings → Plugins → Plugin configuration → Web Search Router** and expand the card to:
-
-- reorder providers;
-- enable/disable providers;
-- configure SearXNG;
-- write or clear provider API keys;
-- set per-provider timeout and cooldown;
-- choose whether an empty result falls through to the next provider.
-
-Non-secret settings live in `plugins/dsh-web-search-router/config.json` next to `$DSH_HOME`; the card reads and writes that file.
-
-Settings writes are accepted only from loopback access. API keys are written through DSH credentials; the UI only reads configured/unconfigured state.
-
-## DeepSeek Search tier
-
-The DeepSeek tier configures nothing of its own: it calls the `deepseek-official` provider DSH
-itself registered, so the endpoint, the model, the account-or-key authentication, and the
-per-request limits all stay owned by DSH. Changing the endpoint in DSH's own Web search settings
-needs no extra step here.
-
-The tier is attempted only while that provider is registered and the session can plausibly
-authenticate — a session on the `deepseek-account` route, or the shared `DEEPSEEK_API_KEY`
-credential the Models page manages for chat. Otherwise the router skips to the next provider.
+Replace `desktop` with the target profile. Configure provider order and credentials in **Settings → Plugins → Web Search Router**. The agent preset must expose the native `web_search` tool; **installation does not add it to minimal presets**.
 
 ## Relative time-range searches
 
-Append one suffix to a search query: `company earnings --week`. Supported suffixes are
-`--day`, `--week`, `--month`, and `--year` (case-insensitive). These are
-**relative, best-effort** filters, not verified publication-date guarantees.
-The suffix is removed before searching; use only one suffix at the end.
+Append one suffix to the query:
 
-A dated query is routed **only** to the enabled SearXNG provider (which may point to an
-API Pool search gateway), regardless of the ordinary provider order. The API Pool
-can still fall back among its own APIs and free search engines. If SearXNG is
-unconfigured, unavailable or fails, the plugin reports that instead of silently
-using an independent provider that ignores the date. Empty dated results are
-returned as empty. Results may contain pages without dates or older pages from
-engines unable to filter; check the source article's date for time-critical tasks.
-
-For a SearXNG-compatible API Pool gateway listening on port 8890, SearXNG requests get a
-32-second provider budget (the gateway may take up to 27 seconds). Other
-providers retain their configured timeouts. The requested `maxResults` is also
-forwarded as `count` to compatible SearXNG gateways.
-
-This syntax is handled by the router, **not** advertised in DSH's built-in
-`web_search` tool schema. Agent instructions or scheduled prompts should
-explicitly ask for the suffix when time filtering is required.
-
-## Fallback behavior
-
-For each enabled provider, in configured order:
-
-1. skip it if not configured or currently cooling down;
-2. run it with the configured timeout;
-3. return immediately on success;
-4. optionally continue on an empty result;
-5. on failure, classify the error and continue to the next provider.
-
-Caller aborts are propagated immediately and never trigger fallback.
-
-## Development
-
-```bash
-npm test
+```text
+company earnings --week
 ```
 
-Tests cover routing order/fallback/cooldowns, settings persistence and provider request/response adapters. Live tests used during local development are intentionally excluded from the public repository because they depend on a running local DSH instance and local credentials.
+Supported suffixes: `--day`, `--week`, `--month` and `--year` (one per query).
 
-## Security
+- Dated searches use **only the enabled SearXNG provider**, rather than falling back to unrelated providers that may ignore dates.
+- A compatible aggregation gateway behind SearXNG may still use multiple internal APIs or free engines.
+- Filtering is **best effort**. Upstream engines without date support may return older or undated pages; verify publication dates for time-sensitive results.
+- The suffix is interpreted by the router, not added to DSH's native `web_search` schema. Scheduled prompts must explicitly request a suffixed query.
 
-- Never commit API keys or `.env` files.
-- Credential values are resolved only on the host side.
-- The browser receives credential references and configured-state metadata, never stored key values.
-- Router errors redact URLs and key/token-like values before logging or surfacing failure details.
+## Notes
 
-## Related plugins
+- The plugin routes searches; source quality and publication dates remain the responsibility of upstream providers.
+- Keep API keys in the DSH host and out of public configuration files.
+- See [package.json](package.json) for dependencies and the last tested host runtime.
 
-- [Browser Tools](https://github.com/Kerberos255/dsh-browser-tools) for CDP-based web interaction.
-- [Status Cards](https://github.com/Kerberos255/dsh-status-cards) for DSH runtime and provider status.
-
-## License
-
-[MIT](LICENSE)
-
-## Optional plugin diagnostics
-
-The plugin optionally emits privacy-restricted operation and failure metadata to dsh-plugin-diagnostics. Diagnostics contain event type, status, fixed error code and elapsed time; conversation content and credentials are not logged. The diagnostics plugin is optional and does not change the host requirements.
+Tests: `npm test`. See [config.example.json](config.example.json) and [LICENSE](LICENSE).
